@@ -1,6 +1,6 @@
 
 # --------------------------------------------------------------------------- #
-# 		Structured Streaming using pyspark from beginning data				          #
+# 		Structured Streaming using pyspark from beginning data	      #
 # --------------------------------------------------------------------------- #
 from pyspark.sql.session import SparkSession
 import pyspark.sql.functions as f
@@ -19,10 +19,10 @@ connectionString = "Endpoint=abcd://azureeh.servicebus.windows.net/;SharedAccess
 # ---------------------------------------------------------------------------#
 ehConf = {} # Created Empty Dictionary                                       #
 ehConf['eventhubs.connectionString'] = connectionString                      #
-																			                                       #
+						 	     		     #
 # Start from beginning of stream                                             #
 startOffset = "-1"                                                           #
-																			                                       #
+						 	     		     #
 # Create the positions                                                       #
 startingEventPosition = {                                                    #
   "offset": startOffset,                                                     #
@@ -30,20 +30,20 @@ startingEventPosition = {                                                    #
   "enqueuedTime": None,                                                      #
   "isInclusive": True                                                        #
 }                                                                            #
-																			                                       #
+						 	     		     #
 endingEventPosition = {                                                      #
   "offset": None,           #not in use                                      #
   "seqNo": -1,              #not in use                                      #
   "enqueuedTime": endTime,                                                   #
   "isInclusive": True                                                        #
 }                                                                            #
-																			                                       #
+						 	     		     #
 import json                                                                  #
 # Put the positions into the Event Hub config dictionary                     #
 ehConf["eventhubs.startingPosition"] = json.dumps(startingEventPosition)     #
 ehConf["eventhubs.endingPosition"] = json.dumps(endingEventPosition)         #
 ehConf['eventhubs.consumerGroup'] = "ConsGroup1"                             #
-																			                                       #
+						 	     		     #
 # ---------------------------------------------------------------------------#
 
 schema_df = spark.readStream.format("eventhubs").options(**ehConf).load()
