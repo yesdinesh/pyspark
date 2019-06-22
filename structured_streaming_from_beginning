@@ -1,0 +1,58 @@
+
+# --------------------------------------------------------------------------- #
+# 		Structured Streaming using pyspark from beginning data				          #
+# --------------------------------------------------------------------------- #
+from pyspark.sql.session import SparkSession
+import pyspark.sql.functions as f
+from pyspark.sql.types import *
+# from azure.eventhub import EventHubClient, Receiver, Offset
+from datetime import datetime as dt
+endTime = dt.now().strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+
+
+spark = SparkSession.builder.appName("AzureStreaming").getOrCreate()
+
+# Connection
+connectionString = "Endpoint=abcd://azureeh.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=abcd;EntityPath=my-eventhub"
+
+
+# ---------------------------------------------------------------------------#
+ehConf = {} # Created Empty Dictionary                                       #
+ehConf['eventhubs.connectionString'] = connectionString                      #
+																			                                       #
+# Start from beginning of stream                                             #
+startOffset = "-1"                                                           #
+																			                                       #
+# Create the positions                                                       #
+startingEventPosition = {                                                    #
+  "offset": startOffset,                                                     #
+  "seqNo": -1,                                                               #
+  "enqueuedTime": None,                                                      #
+  "isInclusive": True                                                        #
+}                                                                            #
+																			                                       #
+endingEventPosition = {                                                      #
+  "offset": None,           #not in use                                      #
+  "seqNo": -1,              #not in use                                      #
+  "enqueuedTime": endTime,                                                   #
+  "isInclusive": True                                                        #
+}                                                                            #
+																			                                       #
+import json                                                                  #
+# Put the positions into the Event Hub config dictionary                     #
+ehConf["eventhubs.startingPosition"] = json.dumps(startingEventPosition)     #
+ehConf["eventhubs.endingPosition"] = json.dumps(endingEventPosition)         #
+ehConf['eventhubs.consumerGroup'] = "ConsGroup1"                             #
+																			                                       #
+# ---------------------------------------------------------------------------#
+
+schema_df = spark.readStream.format("eventhubs").options(**ehConf).load()
+
+print("Schema DF")
+schema_df.printSchema()
+
+schema_df2 = schema_df.withColumn("casted_body", schema_df["body"].cast("string"))
+
+df3 = schema_df2.select("offset", "sequenceNumber", "casted_body")
+
+df3.writeStream.format("console").option("truncate", True).outputMode("update").start().awaitTermination()
